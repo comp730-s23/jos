@@ -1,0 +1,13 @@
+# Rolling forward to 18.04
+FROM ubuntu:18.04
+
+# Packages needed to build filesystem and run xfstests
+RUN apt-get clean
+RUN apt-get update
+RUN apt-get install -y git gcc make qemu qemu-utils qemu-kvm \
+    python
+
+# Build location
+RUN mkdir /oscar
+
+CMD ["bash"]
