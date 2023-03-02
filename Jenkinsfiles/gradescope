@@ -1,7 +1,7 @@
 pipeline {
     agent {
         dockerfile {
-                   filename 'Jenkinsfiles/Dockerfile-16.04'
+                   filename 'Jenkinsfiles/Dockerfile-18.04'
                    args '--device=/dev/kvm:/dev/kvm:rw'
                    label 'jos'
         }
