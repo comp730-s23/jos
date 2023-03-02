@@ -169,7 +169,11 @@ copy(char *src, char *dest)
 {
 	int r;
 	int fd_src, fd_dest;
-	char buffer[512];	//keep this small
+	// Original comments suggest keeping this small
+	// but increasing this significantly improves vmm startup times
+	// 4KiB triggers a bug in copying the VM image - issue #8
+#define BUF_SIZE 2048
+	char buffer[BUF_SIZE];
 	ssize_t read_size;
 	ssize_t write_size;
 	fd_src = open(src, O_RDONLY);
@@ -177,22 +181,22 @@ copy(char *src, char *dest)
 		cprintf("cp open src error:%e\n", fd_src);
 		return fd_src;
 	}
-	
+
 	fd_dest = open(dest, O_CREAT | O_WRONLY);
 	if (fd_dest < 0) {	//error
 		cprintf("cp create dest  error:%e\n", fd_dest);
 		close(fd_src);
 		return fd_dest;
 	}
-	
-	while ((read_size = read(fd_src, buffer, 512)) > 0) {
+
+	while ((read_size = read(fd_src, buffer, BUF_SIZE)) > 0) {
 		write_size = write(fd_dest, buffer, read_size);
 		if (write_size < 0) {
 			cprintf("cp write error:%e\n", write_size);
 			close(fd_src);
 			close(fd_dest);
 			return write_size;
-		}		
+		}
 	}
 	if (read_size < 0) {
 		cprintf("cp read src error:%e\n", read_size);
@@ -203,6 +207,6 @@ copy(char *src, char *dest)
 	close(fd_src);
 	close(fd_dest);
 	return 0;
-	
+
 }
 
