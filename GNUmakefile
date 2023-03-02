@@ -71,6 +71,14 @@ QEMU := $(shell if which qemu-system-x86_64 > /dev/null; \
 	echo "***" 1>&2; exit 1)
 endif
 
+# figure out if we have KVM available
+ifndef KVM
+KVM := $(shell if kvm-ok > /dev/null; \
+	then echo '-enable-kvm'; \
+	else echo ''; \
+	fi)
+endif
+
 # try to generate a unique GDB port
 GDBPORT	:= $(shell expr `id -u` % 5000 + 25000)
 
@@ -131,8 +139,8 @@ all:
 	   $(OBJDIR)/user/%.o
 
 EXTRA_HOST_KERN_CFLAGS :=
-KERN_CFLAGS := $(CFLAGS) -DJOS_KERNEL -DDWARF_SUPPORT -gdwarf-2 -mcmodel=large -m64
-BOOT_CFLAGS := $(CFLAGS) -DJOS_KERNEL -gdwarf-2 -m32
+KERN_CFLAGS := $(CFLAGS) -DJOS_KERNEL -DDWARF_SUPPORT -gdwarf-2 -mcmodel=large -m64 -fno-PIC
+BOOT_CFLAGS := $(CFLAGS) -DJOS_KERNEL -gdwarf-2 -m32 -fno-PIC
 USER_CFLAGS := $(CFLAGS) -DJOS_USER -gdwarf-2 -mcmodel=large -m64
 
 ifdef GUEST_KERN
@@ -175,7 +183,7 @@ PORT7	:= $(shell expr $(GDBPORT) + 1)
 PORT80	:= $(shell expr $(GDBPORT) + 2)
 
 ## We need KVM for qemu to export VMX
-QEMUOPTS = -cpu qemu64,+vmx -enable-kvm -m 256 -drive format=raw,file=$(OBJDIR)/kern/kernel.img -serial mon:stdio -gdb tcp::$(GDBPORT)
+QEMUOPTS = -cpu qemu64,+vmx $(KVM) -m 256 -drive format=raw,file=$(OBJDIR)/kern/kernel.img -serial mon:stdio -gdb tcp::$(GDBPORT)
 QEMUOPTS += $(shell if $(QEMU) -nographic -help | grep -q '^-D '; then echo '-D qemu.log'; fi)
 IMAGES = $(OBJDIR)/kern/kernel.img
 QEMUOPTS += -smp $(CPUS)
